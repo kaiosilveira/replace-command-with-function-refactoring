@@ -8,6 +8,6 @@ describe('ChargeCalculator', () => {
 
     const chargeCalculator = new ChargeCalculator(customer, usage, provider);
 
-    expect(chargeCalculator.charge).toBe(1005);
+    expect(chargeCalculator.charge()).toBe(1005);
   });
 });
