@@ -1,32 +1,10 @@
 [![Continuous Integration](https://github.com/kaiosilveira/replace-command-with-function-refactoring/actions/workflows/ci.yml/badge.svg)](https://github.com/kaiosilveira/replace-command-with-function-refactoring/actions/workflows/ci.yml)
 
-# Refactoring catalog repository template
-
-This is a quick template to help me get a new refactoring repo going.
-
-## Useful commands
-
-- Generate markdown containing a diff with patch information based on a range of commits:
-
-```bash
-yarn tools:cli generate-diff -f <first_commit_sha> -l <last_commit_sha>
-```
-
-- To generate the commit history table for the last section, including the correct links:
-
-```bash
-yarn tools:cli generate-cmt-table -r replace-command-with-function-refactoring
-```
-
----
-
 ℹ️ _This repository is part of my Refactoring catalog based on Fowler's book with the same title. Please see [kaiosilveira/refactoring](https://github.com/kaiosilveira/refactoring) for more details._
 
 ---
 
 # Replace Command With Function
-
-**Formerly: Old name**
 
 <table>
 <thead>
@@ -38,7 +16,16 @@ yarn tools:cli generate-cmt-table -r replace-command-with-function-refactoring
 <td>
 
 ```javascript
-result = initial.code;
+class ChargeCalculator {
+  constructor(customer, usage) {
+    this._customer = customer;
+    this._usage = usage;
+  }
+
+  execute() {
+    return this._customer.rate * this._usage;
+  }
+}
 ```
 
 </td>
@@ -46,10 +33,8 @@ result = initial.code;
 <td>
 
 ```javascript
-result = newCode();
-
-function newCode() {
-  return 'new code';
+function charge(customer, usage) {
+  return customer.rate * usage;
 }
 ```
 
@@ -58,58 +43,249 @@ function newCode() {
 </tbody>
 </table>
 
-**Inverse of: [Another refactoring](https://github.com/kaiosilveira/refactoring)**
+**Inverse of: [Replace Function with Command](https://github.com/kaiosilveira/replace-function-with-command-refactoring)**
 
-**Refactoring introduction and motivation** dolore sunt deserunt proident enim excepteur et cillum duis velit dolor. Aute proident laborum officia velit culpa enim occaecat officia sunt aute labore id anim minim. Eu minim esse eiusmod enim nulla Lorem. Enim velit in minim anim anim ad duis aute ipsum voluptate do nulla. Ad tempor sint dolore et ullamco aute nulla irure sunt commodo nulla aliquip.
+Commands are powerful coding constructs that provide us with greater levels of control over parameters, initialization, and code separation. Sometimes, though, a function is more than enough to accomplish a simple task, providing minimal overhead and a straight-to-the-point approach. This refactoring helps with converting commands into regular functions.
 
 ## Working example
 
-**Working example general explanation** proident reprehenderit mollit non voluptate ea aliquip ad ipsum anim veniam non nostrud. Cupidatat labore occaecat labore veniam incididunt pariatur elit officia. Aute nisi in nulla non dolor ullamco ut dolore do irure sit nulla incididunt enim. Cupidatat aliquip minim culpa enim. Fugiat occaecat qui nostrud nostrud eu exercitation Lorem pariatur fugiat ea consectetur pariatur irure. Officia dolore veniam duis duis eu eiusmod cupidatat laboris duis ad proident adipisicing. Minim veniam consectetur ut deserunt fugiat id incididunt reprehenderit.
+Our working example is a simple program that calculates a charge based on a customer, usage info, and a provider. The `ChargeCalculator` class looks like this:
+
+```javascript
+export class ChargeCalculator {
+  constructor(customer, usage, provider) {
+    this._customer = customer;
+    this._usage = usage;
+    this._provider = provider;
+  }
+
+  get baseCharge() {
+    return this._customer.baseRate * this._usage;
+  }
+
+  get charge() {
+    return this.baseCharge + this._provider.connectionCharge;
+  }
+}
+```
+
+and it's used at the top-level like this:
+
+```javascript
+export function calculateMonthCharge(customer, usage, provider) {
+  const monthCharge = new ChargeCalculator(customer, usage, provider).charge;
+  return monthCharge;
+}
+```
+
+Since the `ChargeCalculator` [command](https://github.com/kaiosilveira/design-patterns/tree/main/command) is so simple, our goal here is to make it into a function, reducing instantiation overhead and optimizing for readability.
 
 ### Test suite
 
-Occaecat et incididunt aliquip ex id dolore. Et excepteur et ea aute culpa fugiat consectetur veniam aliqua. Adipisicing amet reprehenderit elit qui.
+The test suite is as simple as the class itself:
 
 ```javascript
-describe('functionBeingRefactored', () => {
-  it('should work', () => {
-    expect(0).toEqual(1);
+describe('ChargeCalculator', () => {
+  it('calculates the charge', () => {
+    const usage = 100;
+    const customer = { baseRate: 10 };
+    const provider = { connectionCharge: 5 };
+
+    const chargeCalculator = new ChargeCalculator(customer, usage, provider);
+
+    expect(chargeCalculator.charge).toBe(1005);
   });
 });
 ```
 
-Magna ut tempor et ut elit culpa id minim Lorem aliqua laboris aliqua dolor. Irure mollit ad in et enim consequat cillum voluptate et amet esse. Fugiat incididunt ea nulla cupidatat magna enim adipisicing consequat aliquip commodo elit et. Mollit aute irure consequat sunt. Dolor consequat elit voluptate aute duis qui eu do veniam laborum elit quis.
+That should be enough to allow us to proceed safely.
 
 ### Steps
 
-**Step 1 description** mollit eu nulla mollit irure sint proident sint ipsum deserunt ad consectetur laborum incididunt aliqua. Officia occaecat deserunt in aute veniam sunt ad fugiat culpa sunt velit nulla. Pariatur anim sit minim sit duis mollit.
+We start by extracting the `ChargeCalculator` usage into a `charge` function at the top-level `calculateMonthCharge`:
 
 ```diff
-diff --git a/src/price-order/index.js b/src/price-order/index.js
-@@ -3,6 +3,11 @@
--module.exports = old;
-+module.exports = new;
+diff --git top-level...
+ export function calculateMonthCharge(customer, usage, provider) {
+-  const monthCharge = new ChargeCalculator(customer, usage, provider).charge;
++  const monthCharge = charge(customer, usage, provider);
+   return monthCharge;
+ }
++
++function charge(customer, usage, provider) {
++  return new ChargeCalculator(customer, usage, provider).charge;
++}
 ```
 
-**Step n description** mollit eu nulla mollit irure sint proident sint ipsum deserunt ad consectetur laborum incididunt aliqua. Officia occaecat deserunt in aute veniam sunt ad fugiat culpa sunt velit nulla. Pariatur anim sit minim sit duis mollit.
+Then, we extract the `baseCharge` variable at `ChargeCalculator`:
 
 ```diff
-diff --git a/src/price-order/index.js b/src/price-order/index.js
-@@ -3,6 +3,11 @@
--module.exports = old;
-+module.exports = new;
+diff --git ChargeCalculator...
+export class ChargeCalculator {
+   }
+   get charge() {
+-    return this.baseCharge + this._provider.connectionCharge;
++    const baseCharge = this.baseCharge;
++    return baseCharge + this._provider.connectionCharge;
+   }
+ }
 ```
 
-And that's it!
+Following it with an [inline](https://github.com/kaiosilveira/inline-variable-refactoring) the `baseCharge` getter altogether:
+
+```diff
+diff --git ChargeCalculator...
+export class ChargeCalculator {
+
+   get charge() {
+-    const baseCharge = this.baseCharge;
++    const baseCharge = this._customer.baseRate * this._usage;
+     return baseCharge + this._provider.connectionCharge;
+   }
+ }
+```
+
+Leading up to a safe removal of the (now unused) `baseCharge` getter:
+
+```diff
+diff --git ChargeCalculator...
+export class ChargeCalculator {
+-  get baseCharge() {
+-    return this._customer.baseRate * this._usage;
+-  }
+```
+
+Now, on to the change itself, we first need to make the `charge` getter into a function, so we can later [parameterize](https://github.com/kaiosilveira/parameterize-function-refactoring) it:
+
+```diff
+diff --git ChargeCalculator...
+-  get charge() {
++  charge() {
+
+diff --git top-level...
+ function charge(customer, usage, provider) {
+-  return new ChargeCalculator(customer, usage, provider).charge;
++  return new ChargeCalculator(customer, usage, provider).charge();
+ }
+```
+
+And now we can start moving the parameters out of `ChargeCalculator`'s constructor and into `charge`. We start with `customer`:
+
+```diff
+diff --git ChargeCalculator...
+ export class ChargeCalculator {
+-  constructor(customer, usage, provider) {
+-    this._customer = customer;
++  constructor(usage, provider) {
+     this._usage = usage;
+     this._provider = provider;
+   }
+-  charge() {
+-    const baseCharge = this._customer.baseRate * this._usage;
++  charge(customer) {
++    const baseCharge = customer.baseRate * this._usage;
+     return baseCharge + this._provider.connectionCharge;
+   }
+ }
+
+diff --git top-level...
+ function charge(customer, usage, provider) {
+-  return new ChargeCalculator(customer, usage, provider).charge();
++  return new ChargeCalculator(usage, provider).charge(customer);
+ }
+```
+
+then, the same goes for `usage`:
+
+```diff
+diff --git ChargeCalculator...
+ export class ChargeCalculator {
+-  constructor(usage, provider) {
+-    this._usage = usage;
++  constructor(provider) {
+     this._provider = provider;
+   }
+-  charge(customer) {
+-    const baseCharge = customer.baseRate * this._usage;
++  charge(customer, usage) {
++    const baseCharge = customer.baseRate * usage;
+     return baseCharge + this._provider.connectionCharge;
+   }
+ }
+
+diff --git top-level...
+ function charge(customer, usage, provider) {
+-  return new ChargeCalculator(usage, provider).charge(customer);
++  return new ChargeCalculator(provider).charge(customer, usage);
+ }
+```
+
+...and for `provider`:
+
+```diff
+diff --git ChargeCalculator...
+ export class ChargeCalculator {
+-  constructor(provider) {
+-    this._provider = provider;
+-  }
++  constructor() {}
+-  charge(customer, usage) {
++  charge(customer, usage, provider) {
+     const baseCharge = customer.baseRate * usage;
+-    return baseCharge + this._provider.connectionCharge;
++    return baseCharge + provider.connectionCharge;
+   }
+ }
+
+diff --git top-level...
+ function charge(customer, usage, provider) {
+-  return new ChargeCalculator(provider).charge(customer, usage);
++  return new ChargeCalculator().charge(customer, usage, provider);
+ }
+```
+
+Now everything is in place - we can inline `ChargeCalculator` at top-level `charge` function:
+
+```diff
+diff --git top-level...
+ function charge(customer, usage, provider) {
+-  return new ChargeCalculator().charge(customer, usage, provider);
++  const baseCharge = customer.baseRate * usage;
++  return baseCharge + provider.connectionCharge;
+ }
+```
+
+And remove `ChargeCalculator` altogether:
+
+```diff
+diff --git ChargeCalculator...
+-export class ChargeCalculator {
+-  constructor() {}
+-
+-  charge(customer, usage, provider) {
+-    const baseCharge = customer.baseRate * usage;
+-    return baseCharge + provider.connectionCharge;
+-  }
+-}
+```
+
+And that's it for this one!
 
 ### Commit history
 
 Below there's the commit history for the steps detailed above.
 
-| Commit SHA                                                                  | Message                  |
-| --------------------------------------------------------------------------- | ------------------------ |
-| [cmt-sha-1](https://github.com/kaiosilveira/replace-command-with-function-refactoring/commit-SHA-1) | description of commit #1 |
-| [cmt-sha-2](https://github.com/kaiosilveira/replace-command-with-function-refactoring/commit-SHA-2) | description of commit #2 |
-| [cmt-sha-n](https://github.com/kaiosilveira/replace-command-with-function-refactoring/commit-SHA-n) | description of commit #n |
+| Commit SHA                                                                                                                           | Message                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| [68ad9d9](https://github.com/kaiosilveira/replace-command-with-function-refactoring/commit/68ad9d9be5a6195e663f9cdae09614775f54cac8) | extract `ChargeCalculator` usage into a `charge` function at `calculateMonthCharge` |
+| [22f71e6](https://github.com/kaiosilveira/replace-command-with-function-refactoring/commit/22f71e6397439f822693dc8016390514b8fb43ba) | extract `baseCharge` variable at `ChargeCalculator.charge`                          |
+| [365bf42](https://github.com/kaiosilveira/replace-command-with-function-refactoring/commit/365bf42661c8b77f12a993826fb65daab82204f3) | inline `baseCharge` getter at `ChargeCalculator.charge`                             |
+| [c4c6b79](https://github.com/kaiosilveira/replace-command-with-function-refactoring/commit/c4c6b7945e6641300d2ba4b3044bce442c6eac15) | remove unused `baseCharge` getter from `ChargeCalculator`                           |
+| [2600335](https://github.com/kaiosilveira/replace-command-with-function-refactoring/commit/2600335f4f2d86516249371243e71f5a3fdfd51f) | make `ChargeCalculator.charge` getter into a function                               |
+| [eec44ee](https://github.com/kaiosilveira/replace-command-with-function-refactoring/commit/eec44eea4a0ac3eb94ebc92a9b6639c2b98e5874) | move `customer` from ctor dep to method argument at `ChargeCalculator.charge`       |
+| [d0122f5](https://github.com/kaiosilveira/replace-command-with-function-refactoring/commit/d0122f5b9d1f61e308664da3375f7777ae8d9197) | move `usage` from ctor dep to method argument at `ChargeCalculator.charge`          |
+| [8c13ef4](https://github.com/kaiosilveira/replace-command-with-function-refactoring/commit/8c13ef45cbf28a4163bc454988728d3050bb8305) | move `provider` from ctor dep to method argument at `ChargeCalculator.charge`       |
+| [960374f](https://github.com/kaiosilveira/replace-command-with-function-refactoring/commit/960374f1062eadaf68485c655798dfc1b99f0bb6) | inline `ChargeCalculator` at top-level `charge`                                     |
+| [7a8bba2](https://github.com/kaiosilveira/replace-command-with-function-refactoring/commit/7a8bba2b618f9876a90b2aba11097381fa45ae37) | remove `ChargeCalculator`                                                           |
 
 For the full commit history for this project, check the [Commit History tab](https://github.com/kaiosilveira/replace-command-with-function-refactoring/commits/main).
