@@ -1,10 +1,8 @@
 export class ChargeCalculator {
-  constructor(provider) {
-    this._provider = provider;
-  }
+  constructor() {}
 
-  charge(customer, usage) {
+  charge(customer, usage, provider) {
     const baseCharge = customer.baseRate * usage;
-    return baseCharge + this._provider.connectionCharge;
+    return baseCharge + provider.connectionCharge;
   }
 }

@@ -6,5 +6,5 @@ export function calculateMonthCharge(customer, usage, provider) {
 }
 
 function charge(customer, usage, provider) {
-  return new ChargeCalculator(provider).charge(customer, usage);
+  return new ChargeCalculator().charge(customer, usage, provider);
 }
